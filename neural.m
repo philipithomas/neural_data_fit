@@ -30,7 +30,7 @@ T = 100;
 R = rand( C * T , N );
 
 % initialize first iteration of decision variable, M
-M = zeros( N , N ); 
+M = skewdec( N , N ); 
 
 
 %% Generation of R_dot
@@ -71,11 +71,11 @@ end
 
 %% Newton's Method
 k = 0;
-threshhold_newton = 10^( -3 );
+threshhold_newton = 10^( -10 );
 % We set a wide threshhold with the intention of using 
 while 1>0
     M_prior = M;
-    k = k+1;
+    k = k+1
     inv_hessian = inv( neural_function_hessian(  R , R_dot , M ) );
     derivative = neural_function_derivative(  R , R_dot , M );
     
@@ -83,6 +83,10 @@ while 1>0
     
     M = M + d;
     
+    % Force Skew Symmetry
+    M = (M - M')./2;
+    
+    error = norm(M - M_prior , 2)
     if norm(M - M_prior , 2 ) < threshhold_newton
         break;
     end
@@ -94,18 +98,23 @@ threshhold_steepest = 10^( -10 );
 
 while 1>0
     M_prior_descent = M;
-    l = l + 1;
+    l = l + 1
     
     % direction
     d = -1 * neural_function_derivative( R , R_dot , M );
     
     % step size
-    alpha = pinv( ( R * d ) ) * ( R * M - R_dot);
-   
+    % alpha = pinv( ( R * d ) ) * ( R * M - R_dot)
+    alpha = ones(100,100).*10^(-11);
     M = M + alpha .* d;
-       
+    
+    % Force Skew Symmetry
+    M = (M - M')./2;
+    
+    error = norm( M - M_prior_descent , 2 );
     if norm( M - M_prior_descent , 2 ) < threshhold_steepest
         break;
     end
 end
 
+value = neural_function( R , R_dot , M )
