@@ -71,7 +71,7 @@ end
 
 %% Newton's Method
 k = 0;
-threshhold_newton = 10^( -10 );
+threshhold_newton = 10^( -2 );
 % We set a wide threshhold with the intention of using 
 while 1>0
     M_prior = M;
