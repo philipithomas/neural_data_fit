@@ -68,53 +68,61 @@ end
 % We converge partially with Newton's method, then use Steepest Descent
 
 
-
-% %% Newton's Method
-% k = 0;
-% threshhold_newton = 10^( -10 );
-% % We set a wide threshhold with the intention of using 
-% while 1>0
-%     M_prior = M;
-%     k = k+1
-%     inv_hessian = inv( neural_function_hessian(  R , R_dot , M ) );
-%     derivative = neural_function_derivative(  R , R_dot , M );
-%     
-%     d = -1 .* ( inv_hessian * derivative ); 
-%     
-%     M = M + d;
-%     
-%     % Force Skew Symmetry
-%     M = (M - M')./2;
-%     neural_function( R , R_dot , M )
-%     error = norm(M - M_prior , 2);
-%     if norm(M - M_prior , 2 ) < threshhold_newton
-%         break;
-%     end
-% end
-
 %% Steepest Descent
 l = 0;
-threshhold_steepest = 10^( -10 );
-
+threshhold_steepest = 10^( -5 );
+alpha = 10^-5;
+sigma = 1.000000000000001;
 while 1>0
     M_prior_descent = M;
     l = l + 1
     
+   
     % direction
     d = -1 * neural_function_derivative( R , R_dot , M );
     
     % step size
-    alpha = pinv(R) * ( R_dot * ( d * R' ) - R * M * ( d * R' ) ) * pinv( d * (d * R'));
-
+%   alpha = pinv(R) * ( R_dot * ( d * R' ) - R * M * ( d * R' ) ) * pinv( d * (d * R'));
+%   alpha = inv(R'*R) * (-R'*R_dot * d - R'*R*M*d) * inv(d*d); 
+    alpha = alpha/sigma;
+%   index = find(alpha<0);
+%    alpha(index) = 0;
+ 
     M = M + alpha .* d;
     
     % Force Skew Symmetry
     M = (M - M')./2;
     neural_function( R , R_dot , M )
     error = norm( M - M_prior_descent , 2 );
-    if error < threshhold_steepest
+    norm1(l) = norm(neural_function_derivative( R , R_dot , M ));
+    if norm(neural_function_derivative( R , R_dot , M )) < threshhold_steepest || l > 10000 %error < threshhold_steepest
         break;
     end
 end
+
+%% Newton's Method
+k = 0;
+threshhold_newton = 10^( -12 );
+% We set a wide threshhold with the intention of using 
+while 1>0
+    M_prior = M;
+    k = k+1
+    inv_hessian = inv( neural_function_hessian(  R , R_dot , M ) );
+    derivative = neural_function_derivative(  R , R_dot , M );
+    
+    d = -1 .* ( inv_hessian * derivative ); 
+    
+    M = M + d;
+    
+    % Force Skew Symmetry
+    M = (M - M')./2;
+    neural_function( R , R_dot , M )
+    error = norm(M - M_prior , 2);
+    if norm(M - M_prior , 2 ) < threshhold_newton
+        break;
+    end
+end
+
+
 
 value = neural_function( R , R_dot , M )
