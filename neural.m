@@ -30,7 +30,8 @@ T = 100;
 R = rand( C * T , N );
 
 % initialize first iteration of decision variable, M
-A = zeros( N , N ); 
+M = skewdec( N , N ); 
+
 
 %% Generation of R_dot
 
@@ -67,51 +68,38 @@ end
 % We converge partially with Newton's method, then use Steepest Descent
 
 
-% %% Steepest Descent
-% l = 0;
-% threshhold_steepest = 10^( -5 );
-% while 1>0
-%     A_prior_descent = A;
-%     l = l + 1
-%     
-%    
-%     % direction
-%     d = -1 * neural_function_derivative( R , R_dot , A );
-%     
-%     % step size
-% %   alpha = pinv(R) * ( R_dot * ( d * R' ) - R * M * ( d * R' ) ) * pinv( d * (d * R'));
-% %    alpha = inv( R' * R ) * ( -R' * R_dot * d - R' * R * ( A - A' ) * d) * inv( d * d ); 
-%     alpha = 10^-5*ones( 100,100 );
-%     A = A + alpha .* d;
-%     
-%     neural_function( R , R_dot , A )
-%     error = norm( neural_function_derivative( R , R_dot , A ));
-%     if error < threshhold_steepest || l > 10000 %error < threshhold_steepest
-%         break;
-%     end
-% end
-
-%% Newton's Method
-k = 0;
-threshhold_newton = 10^( -12 );
-% We set a wide threshhold with the intention of using 
+%% Steepest Descent
+l = 0;
+threshhold_steepest = 10^( -5 );
+alpha = 10^-5;
+sigma = 1.000000000000001;
 while 1>0
-    A_prior = A;
-    k = k+1
-    inv_hessian = inv( neural_function_hessian(  R , R_dot , A ) );
-    derivative = neural_function_derivative(  R , R_dot , A );
+    M_prior_descent = M;
+    l = l + 1
     
-    d = -1 .* ( inv_hessian * derivative ); 
+   
+    % direction
+    d = -1 * neural_function_derivative( R , R_dot , M );
     
-    A = A + d;
+    % step size
+%   alpha = pinv(R) * ( R_dot * ( d * R' ) - R * M * ( d * R' ) ) * pinv( d * (d * R'));
+%   alpha = inv(R'*R) * (-R'*R_dot * d - R'*R*M*d) * inv(d*d); 
+    alpha = alpha/sigma;
+%   index = find(alpha<0);
+%    alpha(index) = 0;
+ 
+    M = M + alpha .* d;
     
-    neural_function( R , R_dot , A )
-    error = norm( derivative , 2);
-    if error < threshhold_newton
+    % Force Skew Symmetry
+    M = (M - M')./2;
+    neural_function( R , R_dot , M )
+    error = norm( M - M_prior_descent , 2 );
+    norm1(l) = norm(neural_function_derivative( R , R_dot , M ));
+    if norm(neural_function_derivative( R , R_dot , M )) < threshhold_steepest || l > 10000 %error < threshhold_steepest
         break;
     end
 end
 
 
 
-value = neural_function( R , R_dot , A )
+value = neural_function( R , R_dot , M )
