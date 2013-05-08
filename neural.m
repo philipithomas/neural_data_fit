@@ -95,7 +95,7 @@ while 1>0
     neural_function( R , R_dot , M )
     error = norm( M - M_prior_descent , 2 );
     norm1(l) = norm(neural_function_derivative( R , R_dot , M ));
-    if norm(neural_function_derivative( R , R_dot , M )) < threshhold_steepest || l > 10000 %error < threshhold_steepest
+    if norm(neural_function_derivative( R , R_dot , M )) < threshhold_steepest  %error < threshhold_steepest
         break;
     end
 end
